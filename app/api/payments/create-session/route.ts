@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { MockStoreService } from "@/lib/providers/mock/mock.store";
 import { AuthorizeNetService, HOSTED_URL } from "@/lib/services/authorizenet";
+import { withAuth, AuthedRequest } from "@/lib/utils/auth.middleware";
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: AuthedRequest) => {
   try {
     // 🔴 FIX: Extract "billing", not "billingAddress"
     const { amount, billing } = await req.json();
@@ -21,4 +22,4 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }
-}
+});

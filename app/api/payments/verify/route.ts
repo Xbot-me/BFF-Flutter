@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { MockStoreService } from "@/lib/providers/mock/mock.store";
+import { withAuth, AuthedRequest } from "@/lib/utils/auth.middleware";
 
-export async function GET(req: NextRequest) {
+export const GET = withAuth(async (req: AuthedRequest) => {
   const orderId = req.nextUrl.searchParams.get("orderId");
   if (!orderId) return NextResponse.json({ success: false }, { status: 400 });
 
@@ -12,4 +13,4 @@ export async function GET(req: NextRequest) {
     orderId,
     status, // "pending" or "processing" (if paid)
   });
-}
+});

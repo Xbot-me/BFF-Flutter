@@ -39,7 +39,7 @@ export class AuthorizeNetService {
             {
             settingName: "hostedPaymentIFrameCommunicatorUrl",
             settingValue: JSON.stringify({
-                url: "https://74e0-202-125-108-160.ngrok-free.app/api/payments/iframe-communicator"
+                url: process.env.IFRAME_COMMUNICATOR_URL || "https://bff.mustafizur.info/api/payments/iframe-communicator"
             }),
             },
            {

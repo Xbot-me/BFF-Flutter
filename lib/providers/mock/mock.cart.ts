@@ -13,6 +13,10 @@ const MOCK_COUPON_DEFS: Record<string, { type: string; value: number }> = {
 
 let store: CartStore = { items: [], coupons: [] };
 
+export function getCartStore() {
+  return store;
+}
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------

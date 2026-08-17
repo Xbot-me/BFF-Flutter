@@ -120,4 +120,9 @@ export class MockUserProvider {
       ],
     };
   }
+
+  static async deleteUser(userId: string): Promise<void> {
+    await delay(500);
+    userStore.delete(userId);
+  }
 }

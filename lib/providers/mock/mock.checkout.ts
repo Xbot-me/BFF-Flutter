@@ -1,5 +1,6 @@
 import { CheckoutRequest, CheckoutResponse } from "../../validations/checkout.schema";
-import { MockCartProvider } from "./mock.cart";
+import { MockCartProvider, getCartStore } from "./mock.cart";
+import { MOCK_PRODUCTS } from "./mock.data";
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -32,6 +33,23 @@ export class MockCheckoutProvider {
       return MOCK_FAILURE_SCENARIOS[
         Math.floor(Math.random() * MOCK_FAILURE_SCENARIOS.length)
       ];
+    }
+
+    const cartStore = getCartStore();
+    for (const item of cartStore.items) {
+      const product = MOCK_PRODUCTS.find((p) => p.id === item.productId);
+      if (!product) {
+        return { success: false, type: "validation_error", message: `Product ${item.name} not found` };
+      }
+      if (product.stockStatus === "outofstock") {
+        return { success: false, type: "validation_error", message: `${product.name} is out of stock` };
+      }
+      if (item.variantId) {
+        const variant = product.variants?.find((v) => v.id === item.variantId);
+        if (variant && variant.stockStatus === "outofstock") {
+          return { success: false, type: "validation_error", message: `Selected variant for ${product.name} is out of stock` };
+        }
+      }
     }
 
     const orderId  = `MOCK-${Date.now()}`;

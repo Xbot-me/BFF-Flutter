@@ -68,4 +68,11 @@ export class UserService {
         return MockUserProvider.getRewards(userId);
     }
   }
+
+  static async deleteUser(userId: string): Promise<void> {
+    switch (getProvider()) {
+      default:
+        return MockUserProvider.deleteUser(userId);
+    }
+  }
 }

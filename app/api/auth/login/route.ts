@@ -6,8 +6,9 @@
 import { NextResponse } from "next/server";
 import { AuthService } from "@/lib/services/auth.service";
 import { UserSchema } from "@/lib/validations/user.schema";
- 
-export async function POST(request: Request) {
+import { withRateLimit, authRateLimit } from "@/lib/utils/rate-limit";
+
+export const POST = withRateLimit(async (request: Request) => {
   try {
     const { email, password } = await request.json();
     if (!email || !password) {
@@ -19,4 +20,4 @@ export async function POST(request: Request) {
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 401 });
   }
-}
+}, authRateLimit);
