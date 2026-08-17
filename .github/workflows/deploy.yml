@@ -1,4 +1,4 @@
-name: Build & Deploy BFF (Self-Hosted Runner + GHCR)
+name: Build & Deploy BFF (Secure Cloud Runner + GHCR)
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   packages: write
 
 jobs:
-  # ── Step 1: Cloud Builder (Builds & caches image on GitHub's fast runners) ──
+  # ── Step 1: Cloud Builder (Isolated GitHub Runner) ──
   build-and-push:
     name: Build & Push Container to GHCR
     runs-on: ubuntu-latest
@@ -45,29 +45,33 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ── Step 2: Self-Hosted Deployer (Runs directly inside your server via outbound HTTPS) ──
+  # ── Step 2: Secure Pull-Only Deployment via SSH (Isolated User) ──
   deploy:
-    name: Deploy on Server via Self-Hosted Runner
+    name: Deploy to Server via SSH
     needs: build-and-push
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Pull & Deploy Latest Container
-        run: |
-          echo "🚀 Starting deployment via self-hosted runner on server..."
-          
-          # Navigate to repository directory on the host server
-          cd "$HOME/BFF-Flutter" || cd "/root/BFF-Flutter" || cd "/home/$USER/BFF-Flutter" || cd "$(dirname "$PWD")/BFF-Flutter"
-          
-          # Pull pre-built image and restart container (supports both root and non-root docker)
-          if docker compose version >/dev/null 2>&1; then
-            docker compose pull
-            docker compose up -d --remove-orphans
-            docker image prune -f
-          else
-            sudo docker compose pull
-            sudo docker compose up -d --remove-orphans
-            sudo docker image prune -f
-          fi
-          
-          echo "✅ Self-hosted deployment completed successfully!"
+      - name: Execute Pull & Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            echo "🚀 Starting secure container pull & deploy on server..."
+            cd ~/BFF-Flutter || cd /root/BFF-Flutter || cd /home/${{ secrets.SERVER_USER }}/BFF-Flutter
+            
+            # Pull pre-built container layers from GHCR (supports both root and non-root docker)
+            if docker compose version >/dev/null 2>&1; then
+              docker compose pull
+              docker compose up -d --remove-orphans
+              docker image prune -f
+            else
+              sudo docker compose pull
+              sudo docker compose up -d --remove-orphans
+              sudo docker image prune -f
+            fi
+            
+            echo "✅ Container deployed and live!"
