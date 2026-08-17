@@ -10,19 +10,16 @@ const MOCK_FAILURE_SCENARIOS: CheckoutResponse[] = [
     success: false,
     type:    "payment_error",
     message: "Payment declined by issuing bank",
-    error:   { code: "payment_declined", message: "Your card was declined. Please try a different card." },
   },
   {
     success: false,
     type:    "payment_error",
     message: "Insufficient funds",
-    error:   { code: "insufficient_funds", message: "This card has insufficient funds." },
   },
   {
     success: false,
     type:    "server_error",
     message: "Payment gateway timeout",
-    error:   { code: "gateway_timeout", message: "The payment gateway did not respond. Please try again." },
   },
 ];
 

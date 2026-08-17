@@ -101,7 +101,7 @@ export const CheckoutResponseSchema = z.object({
     "server_error",
     "network_error",
   ]).optional(),
-  error:   WooErrorSchema.optional(),
+  
   details: z.any().optional(),
 });
 

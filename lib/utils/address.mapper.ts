@@ -13,7 +13,7 @@ import type { BillingAddress, ShippingAddress } from "../validations/checkout.sc
 // ---------------------------------------------------------------------------
 
 export function mapUserAddressToBilling(
-  address: Address,
+  address: Omit<Address, "id">,
   email:   string,
 ): BillingAddress {
   return {
@@ -30,7 +30,7 @@ export function mapUserAddressToBilling(
   };
 }
 
-export function mapUserAddressToShipping(address: Address): ShippingAddress {
+export function mapUserAddressToShipping(address: Omit<Address, "id">): ShippingAddress {
   return {
     first_name: address.firstName ?? "",
     last_name:  address.lastName  ?? "",

@@ -11,7 +11,7 @@ const VariantSchema = z.object({
   id: z.string().or(z.number()).transform(v => v.toString()),
   sku: z.string().default(''),                              // FIX: was missing — Zod was silently stripping it
   price: z.coerce.number(),
-  selectedOptions: z.record(z.string()),                    // FIX: renamed from `attributes` to match mapper output and Shopify terminology
+  selectedOptions: z.record(z.string(), z.string()),                    // FIX: renamed from `attributes` to match mapper output and Shopify terminology
   stockStatus: z.enum(["instock", "outofstock", "backorder"]),
   stockQuantity: z.coerce.number().default(0),              // FIX: was missing — Zod was silently stripping it
   image: ImageSchema.optional(),

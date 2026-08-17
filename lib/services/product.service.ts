@@ -1,9 +1,8 @@
 import { MockProvider } from "../providers/mock/mock.provider";
-import { WooCommerceProvider } from "../providers/woocommerce/woo.provider";
 import { SortOption } from "../models/catalog";
 // import { ShopifyProvider } from "../providers/shopify/shopify.provider";
 
-type ProviderType = "MOCK" | "WOO" | "SHOPIFY";
+type ProviderType = "MOCK" | "SHOPIFY";
 
 export class ProductService {
 
@@ -24,7 +23,6 @@ export class ProductService {
     const p = this.getProvider();
     console.log(`[ProductService] getAllProducts source=${p} page=${page} perPage=${perPage} category=${category ?? "all"} sort=${sort}`);
     switch (p) {
-      case "WOO":     return WooCommerceProvider.getProducts(page, perPage, category, sort, inStock);
       case "SHOPIFY": throw new Error("Shopify provider not implemented yet");
       default:        return MockProvider.getProducts(page, perPage, category, sort, inStock);
     }
@@ -38,7 +36,6 @@ export class ProductService {
     console.log(`[ProductService] getProduct source=${p} id=${id}`);
     try {
       switch (p) {
-        case "WOO":     return await WooCommerceProvider.getProductDetail(id);
         case "SHOPIFY": throw new Error("Shopify provider not implemented yet");
         default:        return await MockProvider.getProductDetail(id);
       }
@@ -55,7 +52,6 @@ export class ProductService {
     const p = this.getProvider();
     console.log(`[ProductService] search source=${p} q="${query}"`);
     switch (p) {
-      case "WOO":     return WooCommerceProvider.searchProducts(query, page, perPage);
       case "SHOPIFY": throw new Error("Shopify provider not implemented yet");
       default:        return MockProvider.searchProducts(query, page, perPage);
     }
@@ -68,7 +64,6 @@ export class ProductService {
     const p = this.getProvider();
     console.log(`[ProductService] getCategories source=${p}`);
     switch (p) {
-      case "WOO":     return WooCommerceProvider.getCategories();
       case "SHOPIFY": throw new Error("Shopify provider not implemented yet");
       default:        return MockProvider.getCategories();
     }
@@ -81,7 +76,6 @@ export class ProductService {
     const p = this.getProvider();
     console.log(`[ProductService] getFeaturedProducts source=${p}`);
     switch (p) {
-      case "WOO":     return WooCommerceProvider.getFeaturedProducts();
       case "SHOPIFY": throw new Error("Shopify provider not implemented yet");
       default:        return MockProvider.getFeaturedProducts();
     }
@@ -94,7 +88,6 @@ export class ProductService {
     const p = this.getProvider();
     console.log(`[ProductService] getRelatedProducts source=${p} id=${id}`);
     switch (p) {
-      case "WOO":     return WooCommerceProvider.getRelatedProducts(id);
       case "SHOPIFY": throw new Error("Shopify provider not implemented yet");
       default:        return MockProvider.getRelatedProducts(id);
     }

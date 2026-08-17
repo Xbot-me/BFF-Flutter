@@ -1,7 +1,7 @@
 import { AppCart } from "../models/cart";
 import { MockCartProvider } from "../providers/mock/mock.cart";
 
-type P = "MOCK" | "WOO" | "SHOPIFY";
+type P = "MOCK" | "SHOPIFY";
 const getProvider = (): P => (process.env.NEXT_PUBLIC_API_SOURCE ?? "MOCK") as P;
 
 export class CartService {
@@ -11,10 +11,6 @@ export class CartService {
     cartToken?: string | null,
   ): Promise<AppCart> {
     switch (getProvider()) {
-      case "WOO": {
-        const { WooCartProvider } = await import("../providers/woocommerce/woo.cart.provider");
-        return (await WooCartProvider.getCart(nonce, cartToken)).cart;
-      }
       default:
         return MockCartProvider.getCart(cartToken ?? "mock-cart-token");
     }
@@ -38,12 +34,6 @@ export class CartService {
     variantId?: string,
   ): Promise<{ cart: AppCart; cartToken: string }> {
     switch (getProvider()) {
-      case "WOO": {
-        const { WooCartProvider } = await import("../providers/woocommerce/woo.cart.provider");
-        return WooCartProvider.addItem(
-          productId, quantity, nonce, cartToken, selectedOptions, variantId
-        );
-      }
       default: {
         const cart = await MockCartProvider.addItem(
           productId, quantity, selectedOptions, variantId
@@ -59,10 +49,6 @@ export class CartService {
     cartToken: string,
   ): Promise<{ cart: AppCart; cartToken: string }> {
     switch (getProvider()) {
-      case "WOO": {
-        const { WooCartProvider } = await import("../providers/woocommerce/woo.cart.provider");
-        return WooCartProvider.removeItem(key, nonce, cartToken);
-      }
       default:
         return { cart: await MockCartProvider.removeItem(key), cartToken };
     }
@@ -75,10 +61,6 @@ export class CartService {
     cartToken: string,
   ): Promise<{ cart: AppCart; cartToken: string }> {
     switch (getProvider()) {
-      case "WOO": {
-        const { WooCartProvider } = await import("../providers/woocommerce/woo.cart.provider");
-        return WooCartProvider.updateItemQuantity(key, quantity, nonce, cartToken);
-      }
       default:
         return { cart: await MockCartProvider.updateItemQuantity(key, quantity), cartToken };
     }
@@ -90,10 +72,6 @@ export class CartService {
     cartToken: string,
   ): Promise<{ cart: AppCart; cartToken: string }> {
     switch (getProvider()) {
-      case "WOO": {
-        const { WooCartProvider } = await import("../providers/woocommerce/woo.cart.provider");
-        return WooCartProvider.applyCoupon(code, nonce, cartToken);
-      }
       default:
         return { cart: await MockCartProvider.applyCoupon(code), cartToken };
     }
@@ -105,10 +83,6 @@ export class CartService {
     cartToken: string,
   ): Promise<{ cart: AppCart; cartToken: string }> {
     switch (getProvider()) {
-      case "WOO": {
-        const { WooCartProvider } = await import("../providers/woocommerce/woo.cart.provider");
-        return WooCartProvider.removeCoupon(code, nonce, cartToken);
-      }
       default:
         return { cart: await MockCartProvider.removeCoupon(code), cartToken };
     }
@@ -121,10 +95,6 @@ export class CartService {
   userId:         string,
 ): Promise<AppCart> {
   switch (getProvider()) {
-    case "WOO": {
-      const { WooCartProvider } = await import("../providers/woocommerce/woo.cart.provider");
-      return WooCartProvider.mergeCarts(guestCartToken, userCartToken, nonce);
-    }
     default:
       return MockCartProvider.mergeCarts(guestCartToken, userCartToken);
   }

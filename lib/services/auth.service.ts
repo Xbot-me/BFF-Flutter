@@ -1,7 +1,7 @@
 import { AppUser } from "../models/user";
 import { MockAuthProvider } from "../providers/mock/mock.auth";
 
-type P = "MOCK" | "WOO" | "SHOPIFY";
+type P = "MOCK" | "SHOPIFY";
 const getProvider = (): P => (process.env.NEXT_PUBLIC_API_SOURCE ?? "MOCK") as P;
 
 export class AuthService {
@@ -22,10 +22,6 @@ export class AuthService {
   ): Promise<{ user: AppUser; token: string }> {
     console.log(`[AuthService] signup via ${getProvider()}`);
     switch (getProvider()) {
-      case "WOO": {
-        const { WooAuthProvider } = await import("../providers/woocommerce/woo.auth.provider");
-        return WooAuthProvider.signup(email, password, firstName, lastName, phone);
-      }
       case "SHOPIFY":
         // const { ShopifyAuthProvider } = await import("../providers/shopify/shopify.auth.provider");
         // return ShopifyAuthProvider.signup(email, password, firstName, lastName, phone);
@@ -41,10 +37,6 @@ export class AuthService {
   ): Promise<{ user: AppUser; token: string }> {
     console.log(`[AuthService] login via ${getProvider()}`);
     switch (getProvider()) {
-      case "WOO": {
-        const { WooAuthProvider } = await import("../providers/woocommerce/woo.auth.provider");
-        return WooAuthProvider.login(email, password);
-      }
       case "SHOPIFY":
         throw new Error("Shopify auth provider not implemented yet");
       default:
@@ -54,10 +46,6 @@ export class AuthService {
 
   static async getUser(token: string): Promise<AppUser> {
     switch (getProvider()) {
-      case "WOO": {
-        const { WooAuthProvider } = await import("../providers/woocommerce/woo.auth.provider");
-        return WooAuthProvider.getUser(token);
-      }
       case "SHOPIFY":
         throw new Error("Shopify auth provider not implemented yet");
       default:
@@ -67,14 +55,30 @@ export class AuthService {
 
   static async logout(token: string): Promise<void> {
     switch (getProvider()) {
-      case "WOO": {
-        const { WooAuthProvider } = await import("../providers/woocommerce/woo.auth.provider");
-        return WooAuthProvider.logout(token);
-      }
       case "SHOPIFY":
         throw new Error("Shopify auth provider not implemented yet");
       default:
         return MockAuthProvider.logout();
+    }
+  }
+
+  static async forgotPassword(email: string): Promise<void> {
+    console.log(`[AuthService] forgotPassword via ${getProvider()}`);
+    switch (getProvider()) {
+      case "SHOPIFY":
+        throw new Error("Shopify auth provider not implemented yet");
+      default:
+        return MockAuthProvider.forgotPassword(email);
+    }
+  }
+
+  static async resetPassword(token: string, newPassword: string): Promise<void> {
+    console.log(`[AuthService] resetPassword via ${getProvider()}`);
+    switch (getProvider()) {
+      case "SHOPIFY":
+        throw new Error("Shopify auth provider not implemented yet");
+      default:
+        return MockAuthProvider.resetPassword(token, newPassword);
     }
   }
 }

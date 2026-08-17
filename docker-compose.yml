@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  bff:
+    build: .
+    container_name: kpop-bff
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - API_SOURCE=MOCK # Change to SHOPIFY in production

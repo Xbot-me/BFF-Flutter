@@ -14,9 +14,6 @@ interface EnvRule {
 
 const ENV_RULES: EnvRule[] = [
   { key: "NEXT_PUBLIC_API_SOURCE", required: ["always"] },
-  { key: "WOOCOMMERCE_URL",        required: ["WOO"] },
-  { key: "WOOCOMMERCE_KEY",        required: ["WOO"] },
-  { key: "WOOCOMMERCE_SECRET",     required: ["WOO"] },
 ];
 
 export function validateEnv(): void {

@@ -4,7 +4,7 @@ export interface CartItemOption {
 }
 
 export interface CartItem {
-  key: string;               // Woo cart_item_key — required for update/remove calls
+  key: string;               // Shopify lineId — required for update/remove calls
   productId: string;
   variantId?: string;
   name: string;
