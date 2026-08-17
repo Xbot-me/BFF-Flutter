@@ -6,11 +6,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { CheckoutRequestSchema } from "@/lib/validations/checkout.schema";
 import { PaymentService } from "@/lib/services/payment.service";
-import { withAuth, AuthedRequest } from "@/lib/utils/auth.middleware";
+import { withOptionalAuth, OptionalAuthRequest } from "@/lib/utils/auth.middleware";
 
 const idempotencyCache = new Map<string, { result: any; timestamp: number }>();
 
-export const POST = withAuth(async (req: AuthedRequest) => {
+export const POST = withOptionalAuth(async (req: OptionalAuthRequest) => {
   const idempotencyKey = req.headers.get("X-Idempotency-Key");
 
   if (idempotencyKey) {

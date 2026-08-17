@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { MockStoreService } from "@/lib/providers/mock/mock.store";
 import { AuthorizeNetService, HOSTED_URL } from "@/lib/services/authorizenet";
-import { withAuth, AuthedRequest } from "@/lib/utils/auth.middleware";
+import { withOptionalAuth, OptionalAuthRequest } from "@/lib/utils/auth.middleware";
 
-export const POST = withAuth(async (req: AuthedRequest) => {
+export const POST = withOptionalAuth(async (req: OptionalAuthRequest) => {
   try {
     // 🔴 FIX: Extract "billing", not "billingAddress"
     const { amount, billing } = await req.json();
