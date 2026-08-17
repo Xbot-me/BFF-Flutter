@@ -89,14 +89,22 @@ export class CartService {
   }
 
   static async mergeCarts(
-  guestCartToken: string,
-  userCartToken:  string | null | undefined,
-  nonce:          string,
-  userId:         string,
-): Promise<AppCart> {
-  switch (getProvider()) {
-    default:
-      return MockCartProvider.mergeCarts(guestCartToken, userCartToken);
+    guestCartToken: string,
+    userCartToken:  string | null | undefined,
+    nonce:          string,
+    userId:         string,
+  ): Promise<AppCart> {
+    switch (getProvider()) {
+      default:
+        return MockCartProvider.mergeCarts(guestCartToken, userCartToken);
+    }
   }
-}
+
+  static async clearCart(cartToken?: string | null): Promise<AppCart> {
+    switch (getProvider()) {
+      default:
+        MockCartProvider.resetCart();
+        return MockCartProvider.getCart(cartToken ?? "mock-cart-token");
+    }
+  }
 }
