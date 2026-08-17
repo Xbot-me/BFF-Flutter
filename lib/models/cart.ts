@@ -33,6 +33,7 @@ export interface CartCoupon {
 
 export interface AppCart {
   cartToken: string;
+  checkoutUrl?: string;      // Added: Native Shopify Checkout Sheet Kit web URL
   items: CartItem[];
   itemsCount: number;
   totals: CartTotals;

@@ -1,13 +1,13 @@
 import { MockProvider } from "../providers/mock/mock.provider";
 import { SortOption } from "../models/catalog";
-// import { ShopifyProvider } from "../providers/shopify/shopify.provider";
+import { ShopifyStorefrontProvider } from "../providers/shopify/shopify.storefront";
 
 type ProviderType = "MOCK" | "SHOPIFY";
 
 export class ProductService {
 
   private static getProvider(): ProviderType {
-    return (process.env.NEXT_PUBLIC_API_SOURCE || "MOCK") as ProviderType;
+    return (process.env.NEXT_PUBLIC_API_SOURCE || process.env.API_SOURCE || "MOCK").toUpperCase() as ProviderType;
   }
 
   // --------------------------------------------------------------------------
@@ -23,8 +23,10 @@ export class ProductService {
     const p = this.getProvider();
     console.log(`[ProductService] getAllProducts source=${p} page=${page} perPage=${perPage} category=${category ?? "all"} sort=${sort}`);
     switch (p) {
-      case "SHOPIFY": throw new Error("Shopify provider not implemented yet");
-      default:        return MockProvider.getProducts(page, perPage, category, sort, inStock);
+      case "SHOPIFY":
+        return ShopifyStorefrontProvider.getProducts({ first: perPage, query: category });
+      default:
+        return MockProvider.getProducts(page, perPage, category, sort, inStock);
     }
   }
 
@@ -36,8 +38,13 @@ export class ProductService {
     console.log(`[ProductService] getProduct source=${p} id=${id}`);
     try {
       switch (p) {
-        case "SHOPIFY": throw new Error("Shopify provider not implemented yet");
-        default:        return await MockProvider.getProductDetail(id);
+        case "SHOPIFY": {
+          const product = await ShopifyStorefrontProvider.getProduct(id);
+          if (!product) throw new Error(`Product not found: ${id}`);
+          return product;
+        }
+        default:
+          return await MockProvider.getProductDetail(id);
       }
     } catch (error) {
       console.error(`[ProductService] getProduct failed id=${id}`, error);
@@ -52,8 +59,10 @@ export class ProductService {
     const p = this.getProvider();
     console.log(`[ProductService] search source=${p} q="${query}"`);
     switch (p) {
-      case "SHOPIFY": throw new Error("Shopify provider not implemented yet");
-      default:        return MockProvider.searchProducts(query, page, perPage);
+      case "SHOPIFY":
+        return ShopifyStorefrontProvider.getProducts({ first: perPage, query });
+      default:
+        return MockProvider.searchProducts(query, page, perPage);
     }
   }
 
@@ -64,8 +73,10 @@ export class ProductService {
     const p = this.getProvider();
     console.log(`[ProductService] getCategories source=${p}`);
     switch (p) {
-      case "SHOPIFY": throw new Error("Shopify provider not implemented yet");
-      default:        return MockProvider.getCategories();
+      case "SHOPIFY":
+        return ShopifyStorefrontProvider.getCategories();
+      default:
+        return MockProvider.getCategories();
     }
   }
 
@@ -76,8 +87,10 @@ export class ProductService {
     const p = this.getProvider();
     console.log(`[ProductService] getFeaturedProducts source=${p}`);
     switch (p) {
-      case "SHOPIFY": throw new Error("Shopify provider not implemented yet");
-      default:        return MockProvider.getFeaturedProducts();
+      case "SHOPIFY":
+        return ShopifyStorefrontProvider.getProducts({ first: 6, sortKey: "BEST_SELLING" });
+      default:
+        return MockProvider.getFeaturedProducts();
     }
   }
 
@@ -88,8 +101,10 @@ export class ProductService {
     const p = this.getProvider();
     console.log(`[ProductService] getRelatedProducts source=${p} id=${id}`);
     switch (p) {
-      case "SHOPIFY": throw new Error("Shopify provider not implemented yet");
-      default:        return MockProvider.getRelatedProducts(id);
+      case "SHOPIFY":
+        return ShopifyStorefrontProvider.getProducts({ first: 4 });
+      default:
+        return MockProvider.getRelatedProducts(id);
     }
   }
 }
