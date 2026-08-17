@@ -2,11 +2,14 @@ version: '3.8'
 
 services:
   bff:
+    image: ghcr.io/xbot-me/bff-flutter:latest
     build: .
     container_name: kpop-bff
     restart: unless-stopped
     ports:
       - "3000:3000"
+    volumes:
+      - ./data:/app/data
     environment:
       - NODE_ENV=production
       - API_SOURCE=MOCK # Change to SHOPIFY in production

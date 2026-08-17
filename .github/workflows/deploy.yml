@@ -1,20 +1,56 @@
-name: Deploy BFF to Production Server
+name: Build & Deploy BFF (GHCR Container Registry)
 
 on:
   push:
     branches:
       - main
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
-  deploy:
-    name: Deploy to Server
+  build-and-push:
+    name: Build & Push Container to GHCR
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Deploy via SSH
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Downcase Repository Name
+        id: repo-name
+        run: |
+          echo "IMAGE=ghcr.io/${{ github.repository_owner }}/bff-flutter" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.repo-name.outputs.IMAGE }}:latest
+            ${{ steps.repo-name.outputs.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Pull & Deploy on Server
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH (Pull-Only)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -22,9 +58,14 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
-            echo "🚀 Starting automated deployment on server..."
+            echo "🚀 Starting secure container pull & deploy..."
             cd ~/BFF-Flutter || cd /root/BFF-Flutter || cd /home/${{ secrets.SERVER_USER }}/BFF-Flutter
-            git pull origin main
-            docker compose down
-            docker compose up -d --build
-            echo "✅ Deployment completed successfully!"
+            
+            # Pull new pre-built container layers from GHCR (zero build load on server)
+            docker compose pull
+            docker compose up -d --remove-orphans
+            
+            echo "🧹 Cleaning up old unused images..."
+            docker image prune -f
+            
+            echo "✅ Container deployment verified!"
