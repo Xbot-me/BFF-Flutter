@@ -1,8 +1,9 @@
 import { AppCart } from "../models/cart";
 import { MockCartProvider } from "../providers/mock/mock.cart";
+import { ShopifyStorefrontProvider } from "../providers/shopify/shopify.storefront";
 
 type P = "MOCK" | "SHOPIFY";
-const getProvider = (): P => (process.env.NEXT_PUBLIC_API_SOURCE ?? "MOCK") as P;
+const getProvider = (): P => (process.env.NEXT_PUBLIC_API_SOURCE ?? "MOCK").toUpperCase() as P;
 
 export class CartService {
 
@@ -11,8 +12,12 @@ export class CartService {
     cartToken?: string | null,
   ): Promise<AppCart> {
     switch (getProvider()) {
+      case "SHOPIFY":
+        return cartToken
+          ? ShopifyStorefrontProvider.getCart(cartToken)
+          : ShopifyStorefrontProvider.createCart([]);
       default:
-        return MockCartProvider.getCart(cartToken ?? "mock-cart-token");
+        return MockCartProvider.getCart(cartToken ?? `mock-cart-${crypto.randomUUID()}`);
     }
   }
 
@@ -34,11 +39,19 @@ export class CartService {
     variantId?: string,
   ): Promise<{ cart: AppCart; cartToken: string }> {
     switch (getProvider()) {
+      case "SHOPIFY": {
+        const product = variantId ? null : await ShopifyStorefrontProvider.getProduct(productId);
+        const merchandiseId = variantId ?? product?.variants?.[0]?.id;
+        if (!merchandiseId) throw new Error("A purchasable product variant is required");
+        const cart = await ShopifyStorefrontProvider.addCartLine(cartToken, merchandiseId, quantity);
+        return { cart, cartToken: cart.cartToken };
+      }
       default: {
+        const token = cartToken ?? `mock-cart-${crypto.randomUUID()}`;
         const cart = await MockCartProvider.addItem(
-          productId, quantity, selectedOptions, variantId
+          productId, quantity, selectedOptions, variantId, token
         );
-        return { cart, cartToken: cartToken ?? "mock-cart-token" };
+        return { cart, cartToken: token };
       }
     }
   }
@@ -49,8 +62,12 @@ export class CartService {
     cartToken: string,
   ): Promise<{ cart: AppCart; cartToken: string }> {
     switch (getProvider()) {
+      case "SHOPIFY": {
+        const cart = await ShopifyStorefrontProvider.removeCartLine(cartToken, key);
+        return { cart, cartToken: cart.cartToken };
+      }
       default:
-        return { cart: await MockCartProvider.removeItem(key), cartToken };
+        return { cart: await MockCartProvider.removeItem(key, cartToken), cartToken };
     }
   }
 
@@ -61,8 +78,12 @@ export class CartService {
     cartToken: string,
   ): Promise<{ cart: AppCart; cartToken: string }> {
     switch (getProvider()) {
+      case "SHOPIFY": {
+        const cart = await ShopifyStorefrontProvider.updateCartLine(cartToken, key, quantity);
+        return { cart, cartToken: cart.cartToken };
+      }
       default:
-        return { cart: await MockCartProvider.updateItemQuantity(key, quantity), cartToken };
+        return { cart: await MockCartProvider.updateItemQuantity(key, quantity, cartToken), cartToken };
     }
   }
 
@@ -72,8 +93,13 @@ export class CartService {
     cartToken: string,
   ): Promise<{ cart: AppCart; cartToken: string }> {
     switch (getProvider()) {
+      case "SHOPIFY": {
+        const existing = await ShopifyStorefrontProvider.getCart(cartToken);
+        const cart = await ShopifyStorefrontProvider.updateDiscountCodes(cartToken, [...existing.coupons.map((coupon) => coupon.code), code]);
+        return { cart, cartToken: cart.cartToken };
+      }
       default:
-        return { cart: await MockCartProvider.applyCoupon(code), cartToken };
+        return { cart: await MockCartProvider.applyCoupon(code, cartToken), cartToken };
     }
   }
 
@@ -83,8 +109,13 @@ export class CartService {
     cartToken: string,
   ): Promise<{ cart: AppCart; cartToken: string }> {
     switch (getProvider()) {
+      case "SHOPIFY": {
+        const existing = await ShopifyStorefrontProvider.getCart(cartToken);
+        const cart = await ShopifyStorefrontProvider.updateDiscountCodes(cartToken, existing.coupons.filter((coupon) => coupon.code.toUpperCase() !== code.toUpperCase()).map((coupon) => coupon.code));
+        return { cart, cartToken: cart.cartToken };
+      }
       default:
-        return { cart: await MockCartProvider.removeCoupon(code), cartToken };
+        return { cart: await MockCartProvider.removeCoupon(code, cartToken), cartToken };
     }
   }
 
@@ -102,9 +133,12 @@ export class CartService {
 
   static async clearCart(cartToken?: string | null): Promise<AppCart> {
     switch (getProvider()) {
+      case "SHOPIFY":
+        if (!cartToken) throw new Error("Cart-Token is required");
+        return ShopifyStorefrontProvider.clearCart(cartToken);
       default:
-        MockCartProvider.resetCart();
-        return MockCartProvider.getCart(cartToken ?? "mock-cart-token");
+        MockCartProvider.resetCart(cartToken ?? "mock-cart-token");
+        return MockCartProvider.getCart(cartToken ?? `mock-cart-${crypto.randomUUID()}`);
     }
   }
 }

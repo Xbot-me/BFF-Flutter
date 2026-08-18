@@ -4,12 +4,15 @@ import { OrderService } from "@/lib/services/order.service";
 
 // GET /api/orders/:id/track
 export const GET = withAuth(async (
-  _req: AuthedRequest,
+  req: AuthedRequest,
   { params }: { params: Promise<Record<string, string>> },
 ) => {
   try {
     const { id }   = await params;
-    // FIX: OrderService uses static methods — call directly, never use `new OrderService()`
+    const order = await OrderService.getOrderById(id);
+    if (order.billingAddress.email?.toLowerCase() !== req.user.email.toLowerCase()) {
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 });
+    }
     const tracking = await OrderService.getTracking(id);
     return NextResponse.json({ success: true, tracking });
   } catch (err: any) {

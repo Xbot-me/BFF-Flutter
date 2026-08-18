@@ -5,6 +5,7 @@
 // ============================================================
 import { NextRequest, NextResponse } from "next/server";
 import { ProductService } from "@/lib/services/product.service";
+import { getTenantId } from "@/lib/utils/tenant";
  
 export async function GET(
   _req: NextRequest,
@@ -12,7 +13,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const product = await ProductService.getProduct(id);
+    const product = await ProductService.getProduct(id, getTenantId(_req));
     return NextResponse.json({ success: true, product });
   } catch {
     return NextResponse.json({ success: false, error: "Product not found" }, { status: 404 });

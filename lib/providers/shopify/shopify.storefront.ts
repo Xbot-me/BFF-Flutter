@@ -1,7 +1,7 @@
 import { ShopifyClient } from "./shopify.client";
 import { ProductSummary, ProductDetail, ProductImage, ProductVariant } from "@/lib/models/product";
 import { AppCart, CartItem, CartTotals } from "@/lib/models/cart";
-import { ProductCategory } from "@/lib/models/catalog";
+import { PaginatedProducts, ProductCategory } from "@/lib/models/catalog";
 
 export class ShopifyStorefrontProvider {
   static getClient(tenantId?: string | null): ShopifyClient {
@@ -12,11 +12,13 @@ export class ShopifyStorefrontProvider {
   static async getProducts(
     options: { first?: number; query?: string; sortKey?: string; reverse?: boolean } = {},
     tenantId?: string | null
-  ): Promise<ProductSummary[]> {
+  ): Promise<PaginatedProducts> {
     const client = this.getClient(tenantId);
     const query = `
       query GetProducts($first: Int!, $query: String, $sortKey: ProductSortKeys, $reverse: Boolean) {
         products(first: $first, query: $query, sortKey: $sortKey, reverse: $reverse) {
+          totalCount
+          pageInfo { hasNextPage }
           edges {
             node {
               id
@@ -57,7 +59,7 @@ export class ShopifyStorefrontProvider {
       reverse: options.reverse || false,
     });
 
-    return data.products.edges.map(({ node }: any): ProductSummary => {
+    const products = data.products.edges.map(({ node }: any): ProductSummary => {
       const minPrice = parseFloat(node.priceRange.minVariantPrice.amount);
       const maxPrice = parseFloat(node.priceRange.maxVariantPrice.amount);
       const comparePrice = node.compareAtPriceRange?.minVariantPrice?.amount
@@ -84,11 +86,24 @@ export class ShopifyStorefrontProvider {
           alt: node.featuredImage?.altText || node.title,
         },
         category: node.collections?.nodes?.[0]?.title || "Merch",
-        averageRating: 4.8,
+        // Storefront API does not provide verified review ratings. Returning 0
+        // prevents the mobile client from presenting invented social proof.
+        averageRating: 0,
         createdAt: node.createdAt,
         updatedAt: node.updatedAt,
       };
     });
+
+    const total = data.products.totalCount ?? products.length;
+    const perPage = options.first || 20;
+    return {
+      products,
+      total,
+      page: 1,
+      perPage,
+      totalPages: Math.max(1, Math.ceil(total / perPage)),
+      hasNextPage: Boolean(data.products.pageInfo?.hasNextPage),
+    };
   }
 
   // ── Product Detail ──
@@ -231,7 +246,7 @@ export class ShopifyStorefrontProvider {
         alt: node.featuredImage?.altText || node.title,
       },
       category: node.collections?.nodes?.[0]?.title || "Merch",
-      averageRating: 4.9,
+      averageRating: 0,
       description: node.description || "",
       shortDescription: node.description?.substring(0, 150) || "",
       images: images.length > 0 ? images : [{ id: "feat", url: node.featuredImage?.url || "", alt: node.title }],
@@ -389,5 +404,83 @@ export class ShopifyStorefrontProvider {
 
     const data = await client.query(mutation, { input: { lines: formattedLines } });
     return this.mapShopifyCart(data.cartCreate.cart);
+  }
+
+  private static cartFields = `
+    id checkoutUrl totalQuantity
+    cost { subtotalAmount { amount currencyCode } totalAmount { amount currencyCode } totalTaxAmount { amount currencyCode } }
+    discountCodes { code applicable }
+    lines(first: 50) { edges { node { id quantity cost { totalAmount { amount currencyCode } } merchandise { ... on ProductVariant { id title price { amount currencyCode } image { url } selectedOptions { name value } product { id title featuredImage { url } } } } } } }
+  `;
+
+  private static assertCartResult(payload: { cart?: unknown; userErrors?: Array<{ message: string }> }): unknown {
+    const error = payload.userErrors?.[0]?.message;
+    if (error) throw new Error(error);
+    if (!payload.cart) throw new Error("Shopify did not return a cart");
+    return payload.cart;
+  }
+
+  static async getCart(cartId: string, tenantId?: string | null): Promise<AppCart> {
+    const client = this.getClient(tenantId);
+    const data = await client.query<{ cart: unknown }>(
+      `query GetCart($id: ID!) { cart(id: $id) { ${this.cartFields} } }`,
+      { id: cartId }, { cache: "no-store" },
+    );
+    if (!data.cart) throw new Error("Cart not found");
+    return this.mapShopifyCart(data.cart);
+  }
+
+  static async addCartLine(
+    cartId: string | null | undefined,
+    variantId: string,
+    quantity: number,
+    tenantId?: string | null,
+  ): Promise<AppCart> {
+    if (!cartId) return this.createCart([{ merchandiseId: variantId, quantity }], tenantId);
+    const client = this.getClient(tenantId);
+    const data = await client.query<{ cartLinesAdd: { cart?: unknown; userErrors?: Array<{ message: string }> } }>(
+      `mutation AddCartLine($cartId: ID!, $lines: [CartLineInput!]!) { cartLinesAdd(cartId: $cartId, lines: $lines) { cart { ${this.cartFields} } userErrors { message } } }`,
+      { cartId, lines: [{ merchandiseId: variantId.startsWith("gid://") ? variantId : `gid://shopify/ProductVariant/${variantId}`, quantity }] },
+      { cache: "no-store" },
+    );
+    return this.mapShopifyCart(this.assertCartResult(data.cartLinesAdd));
+  }
+
+  static async updateCartLine(cartId: string, lineId: string, quantity: number, tenantId?: string | null): Promise<AppCart> {
+    const client = this.getClient(tenantId);
+    const data = await client.query<{ cartLinesUpdate: { cart?: unknown; userErrors?: Array<{ message: string }> } }>(
+      `mutation UpdateCartLine($cartId: ID!, $lines: [CartLineUpdateInput!]!) { cartLinesUpdate(cartId: $cartId, lines: $lines) { cart { ${this.cartFields} } userErrors { message } } }`,
+      { cartId, lines: [{ id: lineId, quantity }] }, { cache: "no-store" },
+    );
+    return this.mapShopifyCart(this.assertCartResult(data.cartLinesUpdate));
+  }
+
+  static async removeCartLine(cartId: string, lineId: string, tenantId?: string | null): Promise<AppCart> {
+    const client = this.getClient(tenantId);
+    const data = await client.query<{ cartLinesRemove: { cart?: unknown; userErrors?: Array<{ message: string }> } }>(
+      `mutation RemoveCartLine($cartId: ID!, $lineIds: [ID!]!) { cartLinesRemove(cartId: $cartId, lineIds: $lineIds) { cart { ${this.cartFields} } userErrors { message } } }`,
+      { cartId, lineIds: [lineId] }, { cache: "no-store" },
+    );
+    return this.mapShopifyCart(this.assertCartResult(data.cartLinesRemove));
+  }
+
+  static async clearCart(cartId: string, tenantId?: string | null): Promise<AppCart> {
+    const current = await this.getCart(cartId, tenantId);
+    if (current.items.length === 0) return current;
+    const client = this.getClient(tenantId);
+    const data = await client.query<{ cartLinesRemove: { cart?: unknown; userErrors?: Array<{ message: string }> } }>(
+      `mutation ClearCart($cartId: ID!, $lineIds: [ID!]!) { cartLinesRemove(cartId: $cartId, lineIds: $lineIds) { cart { ${this.cartFields} } userErrors { message } } }`,
+      { cartId, lineIds: current.items.map((item) => item.key) }, { cache: "no-store" },
+    );
+    return this.mapShopifyCart(this.assertCartResult(data.cartLinesRemove));
+  }
+
+  static async updateDiscountCodes(cartId: string, codes: string[], tenantId?: string | null): Promise<AppCart> {
+    const client = this.getClient(tenantId);
+    const data = await client.query<{ cartDiscountCodesUpdate: { cart?: unknown; userErrors?: Array<{ message: string }> } }>(
+      `mutation UpdateDiscountCodes($cartId: ID!, $codes: [String!]) { cartDiscountCodesUpdate(cartId: $cartId, discountCodes: $codes) { cart { ${this.cartFields} } userErrors { message } } }`,
+      { cartId, codes }, { cache: "no-store" },
+    );
+    return this.mapShopifyCart(this.assertCartResult(data.cartDiscountCodesUpdate));
   }
 }

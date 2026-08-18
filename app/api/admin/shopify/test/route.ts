@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withAdmin } from "@/lib/utils/admin.middleware";
 
 /**
  * POST /api/admin/shopify/test
  * Body: { storeDomain: "your-store.myshopify.com", storefrontAccessToken: "..." }
  * Tests Shopify Storefront GraphQL connectivity.
  */
-export async function POST(req: NextRequest) {
+export const POST = withAdmin(async (req: NextRequest) => {
   try {
     const { storeDomain, storefrontAccessToken } = await req.json();
 
@@ -18,6 +19,9 @@ export async function POST(req: NextRequest) {
 
     // Clean domain format
     const domain = storeDomain.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+    if (!/^[a-z0-9][a-z0-9.-]*\.myshopify\.com$/i.test(domain)) {
+      return NextResponse.json({ success: false, error: "A valid *.myshopify.com domain is required" }, { status: 400 });
+    }
     const endpoint = `https://${domain}/api/2024-04/graphql.json`;
 
     const query = `
@@ -84,4 +88,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

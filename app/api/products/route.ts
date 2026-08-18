@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ProductService } from "@/lib/services/product.service";
 import { SortOption } from "@/lib/models/catalog";
+import { getTenantId } from "@/lib/utils/tenant";
  
 const VALID_SORTS: SortOption[] = ["newest", "oldest", "price_asc", "price_desc", "rating", "name_asc"];
  
@@ -19,9 +20,16 @@ export async function GET(req: NextRequest) {
     const sort     = VALID_SORTS.includes(sortRaw as SortOption) ? sortRaw as SortOption : "newest";
     const inStock  = s.get("inStock") === "true" ? true : undefined;
  
-    const result = await ProductService.getAllProducts(page, perPage, category, sort, inStock);
+    const result = await ProductService.getAllProducts(page, perPage, category, sort, inStock, getTenantId(req));
  
-    return NextResponse.json({ success: true, ...result });
+    return NextResponse.json(
+      { success: true, ...result },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }

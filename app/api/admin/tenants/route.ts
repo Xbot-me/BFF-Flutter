@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TenantService } from "@/lib/services/tenant.service";
 import { TenantConfigSchema } from "@/lib/models/tenant";
+import { withAdmin } from "@/lib/utils/admin.middleware";
 
 /**
  * GET /api/admin/tenants
  * Lists all registered merchant tenants.
  */
-export async function GET() {
+export const GET = withAdmin(async () => {
   try {
     const tenants = TenantService.getAllTenants();
     return NextResponse.json({
@@ -19,13 +20,13 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/admin/tenants
  * Creates or updates a tenant configuration.
  */
-export async function POST(req: NextRequest) {
+export const POST = withAdmin(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const parsed = TenantConfigSchema.partial().parse(body);
@@ -54,4 +55,4 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
-}
+});

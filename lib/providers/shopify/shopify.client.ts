@@ -31,7 +31,11 @@ export class ShopifyClient {
     return Boolean(this.domain && this.token);
   }
 
-  async query<T = any>(query: string, variables: Record<string, any> = {}): Promise<T> {
+  async query<T = any>(
+    query: string,
+    variables: Record<string, unknown> = {},
+    options: { cache?: RequestCache; revalidate?: number } = {},
+  ): Promise<T> {
     if (!this.isConfigured) {
       throw new Error("Shopify Storefront credentials are not configured for this tenant.");
     }
@@ -45,7 +49,10 @@ export class ShopifyClient {
         "X-Shopify-Storefront-Access-Token": this.token,
       },
       body: JSON.stringify({ query, variables }),
-      next: { revalidate: 30 }, // Next.js cache
+      // Cart and checkout mutations must never be served from cache. Product
+      // requests retain a short cache unless the caller explicitly opts out.
+      cache: options.cache,
+      next: options.cache === "no-store" ? undefined : { revalidate: options.revalidate ?? 30 },
     });
 
     if (!res.ok) {

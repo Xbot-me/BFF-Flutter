@@ -11,22 +11,31 @@ const MOCK_COUPON_DEFS: Record<string, { type: string; value: number }> = {
   "NEWUSER": { type: "fixed_cart", value: 5  },
 };
 
-let store: CartStore = { items: [], coupons: [] };
+const stores = new Map<string, CartStore>();
 
-export function getCartStore() {
-  return store;
+function getStore(token: string): CartStore {
+  const existing = stores.get(token);
+  if (existing) return existing;
+  const created = { items: [], coupons: [] };
+  stores.set(token, created);
+  return created;
+}
+
+export function getCartStore(token = "mock-cart-token") {
+  return getStore(token);
 }
 
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-function subtotal(): number {
+function subtotal(store: CartStore): number {
   return store.items.reduce((s, i) => s + i.lineTotal, 0);
 }
 
 function buildCart(token: string): AppCart {
-  const sub      = subtotal();
+  const store = getStore(token);
+  const sub      = subtotal(store);
   const discount = store.coupons.reduce((s, c) => s + c.discount, 0);
   const shipping = store.items.length > 0 ? 5.95 : 0;
   const tax      = parseFloat(((sub - discount) * 0.08).toFixed(2));
@@ -86,9 +95,11 @@ export class MockCartProvider {
     quantity: number,
     selectedOptions?: Record<string, string>,
     variantId?: string,
+    cartToken = "mock-cart-token",
   ): Promise<AppCart> {
     await delay(600);
 
+    const store = getStore(cartToken);
     const product = MOCK_PRODUCTS.find((p) => p.id === productId);
     if (!product)                              throw new Error(`Product ${productId} not found`);
     if (product.stockStatus === "outofstock") throw new Error(`${product.name} is out of stock`);
@@ -153,19 +164,21 @@ export class MockCartProvider {
       });
     }
 
-    return buildCart("mock-cart-token");
+    return buildCart(cartToken);
   }
 
-  static async removeItem(key: string): Promise<AppCart> {
+  static async removeItem(key: string, cartToken = "mock-cart-token"): Promise<AppCart> {
     await delay(400);
+    const store = getStore(cartToken);
     const before = store.items.length;
     store.items  = store.items.filter((i) => i.key !== key);
     if (store.items.length === before) throw new Error(`Cart item ${key} not found`);
-    return buildCart("mock-cart-token");
+    return buildCart(cartToken);
   }
 
-  static async updateItemQuantity(key: string, quantity: number): Promise<AppCart> {
+  static async updateItemQuantity(key: string, quantity: number, cartToken = "mock-cart-token"): Promise<AppCart> {
     await delay(400);
+    const store = getStore(cartToken);
     const idx = store.items.findIndex((i) => i.key === key);
     if (idx < 0) throw new Error(`Cart item ${key} not found`);
 
@@ -179,11 +192,12 @@ export class MockCartProvider {
         lineTotal: parseFloat((item.price * quantity).toFixed(2)),
       };
     }
-    return buildCart("mock-cart-token");
+    return buildCart(cartToken);
   }
 
-  static async applyCoupon(code: string): Promise<AppCart> {
+  static async applyCoupon(code: string, cartToken = "mock-cart-token"): Promise<AppCart> {
     await delay(500);
+    const store = getStore(cartToken);
     const upper = code.toUpperCase();
     const def   = MOCK_COUPON_DEFS[upper];
     if (!def)                                         throw new Error(`Coupon "${code}" is not valid`);
@@ -192,22 +206,23 @@ export class MockCartProvider {
     store.coupons.push({
       code:         upper,
       discountType: def.type,
-      discount:     calcDiscount(def, subtotal()),
+      discount:     calcDiscount(def, subtotal(store)),
     });
-    return buildCart("mock-cart-token");
+    return buildCart(cartToken);
   }
 
-  static async removeCoupon(code: string): Promise<AppCart> {
+  static async removeCoupon(code: string, cartToken = "mock-cart-token"): Promise<AppCart> {
     await delay(300);
+    const store = getStore(cartToken);
     const upper  = code.toUpperCase();
     const before = store.coupons.length;
     store.coupons = store.coupons.filter((c) => c.code !== upper);
     if (store.coupons.length === before) throw new Error(`Coupon "${code}" not in cart`);
-    return buildCart("mock-cart-token");
+    return buildCart(cartToken);
   }
 
-  static resetCart(): void {
-    store = { items: [], coupons: [] };
+  static resetCart(cartToken = "mock-cart-token"): void {
+    stores.set(cartToken, { items: [], coupons: [] });
   }
 
    
