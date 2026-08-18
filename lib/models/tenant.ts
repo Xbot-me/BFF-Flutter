@@ -94,11 +94,11 @@ export const TenantConfigSchema = z.object({
 
 export const THEME_PRESETS: Record<ThemePreset, Partial<BrandingConfig>> = {
   bold_dark: {
-    primaryColor: "#E5A93C",
-    secondaryColor: "#9D4EDD",
-    backgroundColor: "#0A0A0C",
-    surfaceColor: "#16161A",
-    textColor: "#F4F4F6",
+    primaryColor: "#D7BAFF",
+    secondaryColor: "#FFB1C7",
+    backgroundColor: "#050505",
+    surfaceColor: "#131313",
+    textColor: "#E5E2E1",
     fontFamily: "Cinzel",
     borderRadius: 16,
   },

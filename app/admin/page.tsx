@@ -943,133 +943,229 @@ export default function AdminDashboard() {
             </div>
 
             {/* 📱 Realistic Smartphone Device Frame (iPhone 16 Pro Style) */}
-            <div className="relative h-[660px] w-[320px] overflow-hidden rounded-[46px] border-[6px] border-[#24272E] bg-black shadow-2xl shadow-black/90 ring-1 ring-white/10">
+            <div className="relative h-[680px] w-[320px] overflow-hidden rounded-[48px] border-[6px] border-[#24272E] bg-black shadow-2xl shadow-black/90 ring-1 ring-white/10 flex flex-col">
               
               {/* Dynamic Island Pill */}
-              <div className="absolute left-1/2 top-2.5 z-30 h-5 w-24 -translate-x-1/2 rounded-full bg-black"></div>
+              <div className="absolute left-1/2 top-2.5 z-30 h-4.5 w-24 -translate-x-1/2 rounded-full bg-black"></div>
 
-              {/* Dynamic Customer App Canvas (180ms ease-out transition on token changes) */}
+              {/* Status Bar */}
+              <div className="relative z-20 flex items-center justify-between px-6 pt-3 pb-1 text-[11px] font-semibold text-white/90">
+                <span>1:03</span>
+                <div className="flex items-center gap-1.5 text-[10px]">
+                  <span>5G</span>
+                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L12 22l7.03-4.39C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9z"/>
+                  </svg>
+                  <div className="flex items-center border border-white/60 rounded-xs px-0.5 py-0.2 text-[8px] leading-none">
+                    ⚡ 88%
+                  </div>
+                </div>
+              </div>
+
+              {/* Dynamic Customer App Canvas */}
               <div
-                className="h-full w-full overflow-y-auto px-4 pt-10 pb-16 transition-colors duration-200 ease-out"
+                className="relative flex-1 overflow-y-auto overflow-x-hidden transition-colors duration-200 ease-out"
                 style={{
                   backgroundColor: branding.backgroundColor,
                   color: branding.textColor,
                   fontFamily: branding.fontFamily,
                 }}
               >
-                {/* App Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-white/5">
-                  <div className="flex items-center gap-2">
-                    {branding.logoUrl ? (
-                      <img src={branding.logoUrl} alt="Logo" className="h-6 w-6 rounded-full object-cover shadow-sm" />
-                    ) : (
-                      <div
-                        className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-black"
-                        style={{ backgroundColor: branding.primaryColor }}
-                      >
-                        {branding.appTitle[0]}
-                      </div>
-                    )}
-                    <span className="text-xs font-bold tracking-wider">{branding.appTitle}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs opacity-90">
-                    <span className="cursor-pointer">🔍</span>
-                    <span className="cursor-pointer">🛒</span>
-                  </div>
-                </div>
-
-                {/* ── SCREEN 1: HOME PREVIEW ── */}
+                {/* ── SCREEN 1: HOME PREVIEW (Pixel-Identical to Live App) ── */}
                 {previewScreen === "home" && (
-                  <div className="space-y-4 pt-2">
-                    {/* Hero Promo Drop Banner */}
-                    <div
-                      className="relative h-32 overflow-hidden rounded-xl p-3 shadow-md"
-                      style={{
-                        backgroundColor: branding.surfaceColor,
-                        borderRadius: `${branding.borderRadius}px`,
-                      }}
-                    >
-                      {branding.bannerUrl && (
-                        <img
-                          src={branding.bannerUrl}
-                          alt="Banner"
-                          className="absolute inset-0 h-full w-full object-cover opacity-60"
-                        />
-                      )}
-                      <div className="relative z-10 flex h-full flex-col justify-end">
-                        <span
-                          className="w-fit rounded px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-black shadow-sm"
-                          style={{ backgroundColor: branding.primaryColor }}
-                        >
-                          TOUR MERCH DROP
-                        </span>
-                        <h4 className="mt-1 text-sm font-bold leading-tight">World Tour 2026</h4>
+                  <div className="relative pb-20">
+                    
+                    {/* Top App Bar with transparent overlay */}
+                    <div className="relative z-20 flex items-center justify-between px-4 py-2">
+                      {/* 2-line Hamburger Menu */}
+                      <div className="flex flex-col gap-1 cursor-pointer p-1">
+                        <span className="h-0.5 w-5 bg-white rounded-full"></span>
+                        <span className="h-0.5 w-3.5 bg-white rounded-full"></span>
+                      </div>
+
+                      {/* App Title */}
+                      <span className="text-sm font-bold tracking-[0.25em] text-white">
+                        {branding.appTitle.toUpperCase()}
+                      </span>
+
+                      {/* Notification Bell */}
+                      <div className="relative cursor-pointer p-1">
+                        <svg className="h-4.5 w-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: branding.primaryColor }}></span>
                       </div>
                     </div>
 
-                    {/* Category Filter Pills */}
-                    <div className="flex gap-1.5 overflow-x-hidden text-[10px]">
-                      {["All Merch", "Albums", "Lightsticks", "Apparel"].map((cat, i) => (
+                    {/* 🎬 Hero Banner Stage (Layered Idols + Backglow + CTA) */}
+                    <div className="relative -mt-10 h-72 w-full overflow-hidden">
+                      {/* Ambient Neon Backglow */}
+                      <div
+                        className="absolute inset-0 opacity-40 blur-2xl"
+                        style={{
+                          background: `radial-gradient(circle at 50% 40%, ${branding.secondaryColor} 0%, ${branding.primaryColor} 40%, transparent 80%)`,
+                        }}
+                      ></div>
+
+                      {/* Hero Image */}
+                      <img
+                        src={branding.bannerUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuB5UZQXZWtopR0Vgkws9ZAdl2mcicBYFguCLRwHpJmfkBO34EpVxsaJ6y8AQfdvyv2-bpZv-QckiXN1IreG4dzdzzM2kCqxWV9_bqy900s4662KJ4uAmlgCntdxu2-wSw9gMiafXE9CeIvs9GSYHyJJp1wp8FBIc1bitpWS71nvbCjT37KKKYw0vjaMTEUEAI3GcGydcvo6sFKh-ekIuKPc4DZ-4MTEA-L-l_cr-oZYN6uyLJPWbn3PZoNPLE2957XrH-xtUnj1JTQ"}
+                        alt="Hero Banner"
+                        className="h-full w-full object-cover object-top"
+                      />
+
+                      {/* Bottom Gradient Fade */}
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          background: `linear-gradient(to top, ${branding.backgroundColor} 12%, transparent 70%)`,
+                        }}
+                      ></div>
+
+                      {/* Hero Headlines & Shop Button */}
+                      <div className="absolute bottom-3 left-4 right-4 z-10">
                         <span
-                          key={cat}
-                          className="rounded-full px-2.5 py-0.5 font-medium transition"
+                          className="font-mono text-[9px] font-bold uppercase tracking-[0.2em]"
+                          style={{ color: branding.primaryColor }}
+                        >
+                          {branding.tagline ? branding.tagline.toUpperCase() : "EXCLUSIVE PRE-ORDER"}
+                        </span>
+                        <h3 className="mt-1 text-xl font-black leading-tight text-white drop-shadow-md">
+                          2026 Season's<br />Greetings
+                        </h3>
+                        <button
+                          className="mt-3 inline-flex items-center rounded-lg px-4 py-2 text-[10px] font-bold uppercase tracking-wider shadow-lg transition active:scale-95"
                           style={{
-                            backgroundColor: i === 0 ? branding.primaryColor : branding.surfaceColor,
-                            color: i === 0 ? "#000000" : branding.textColor,
+                            backgroundColor: branding.primaryColor,
+                            color: "#41117C",
+                            borderRadius: `${Math.min(branding.borderRadius, 12)}px`,
                           }}
                         >
-                          {cat}
-                        </span>
-                      ))}
+                          SHOP COLLECTION
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Realistic Product Grid (No Placeholders) */}
-                    <div className="grid grid-cols-2 gap-2.5">
-                      {SAMPLE_PRODUCTS.slice(0, 2).map((item) => (
-                        <div
-                          key={item.id}
-                          className="group flex flex-col overflow-hidden p-2 shadow-sm transition"
-                          style={{
-                            backgroundColor: branding.surfaceColor,
-                            borderRadius: `${branding.borderRadius}px`,
-                          }}
-                        >
-                          <div className="relative h-24 w-full overflow-hidden rounded bg-black/40">
-                            <img src={item.image} alt={item.title} className="h-full w-full object-cover" />
-                            <span
-                              className="absolute right-1 top-1 rounded px-1 text-[8px] font-bold uppercase tracking-wider"
-                              style={{
-                                backgroundColor: branding.secondaryColor,
-                                color: "#000000",
-                              }}
-                            >
-                              {item.badge}
-                            </span>
+                    {/* Content Body */}
+                    <div className="px-3.5 space-y-3 pt-1">
+                      {/* 🔍 Search Input Bar */}
+                      <div
+                        className="flex items-center gap-2 rounded-xl px-3 py-2.5 shadow-inner"
+                        style={{ backgroundColor: branding.surfaceColor }}
+                      >
+                        <svg className="h-3.5 w-3.5 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <span className="text-[11px] opacity-60">Search albums, merch, artists...</span>
+                      </div>
+
+                      {/* ⚡ Flash Sale Countdown Card */}
+                      <div
+                        className="flex items-center justify-between rounded-xl p-3 border border-white/5"
+                        style={{
+                          backgroundColor: branding.surfaceColor,
+                          borderRadius: `${branding.borderRadius}px`,
+                        }}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-sm shadow-sm"
+                            style={{ backgroundColor: `${branding.secondaryColor}25`, color: branding.secondaryColor }}
+                          >
+                            ⚡
                           </div>
-                          
-                          <span className="mt-2 text-[11px] font-bold line-clamp-1 leading-tight">{item.title}</span>
-                          <span className="text-[9px] opacity-60 line-clamp-1">{item.subtitle}</span>
-                          
-                          <div className="mt-2 flex items-center justify-between">
-                            <span className="text-xs font-bold" style={{ color: branding.primaryColor }}>
-                              {item.price}
-                            </span>
-                            <button
-                              className="rounded px-2 py-0.5 text-[9px] font-bold uppercase text-black"
-                              style={{ backgroundColor: branding.primaryColor }}
-                            >
-                              Add
-                            </button>
+                          <div>
+                            <div className="font-mono text-[9px] font-bold uppercase tracking-wider" style={{ color: branding.primaryColor }}>
+                              FLASH SALE
+                            </div>
+                            <div className="text-[10px] font-medium text-white/90">
+                              Up to 40% off selected items
+                            </div>
                           </div>
                         </div>
-                      ))}
+
+                        {/* Real Countdown Timer Boxes */}
+                        <div className="flex items-center gap-1 font-mono text-[10px] font-bold">
+                          <div className="flex flex-col items-center">
+                            <span className="rounded bg-black/40 px-1.5 py-0.5 text-white">05</span>
+                            <span className="text-[7px] text-[#9095A2] mt-0.5">HR</span>
+                          </div>
+                          <span className="text-white/60 mb-2">:</span>
+                          <div className="flex flex-col items-center">
+                            <span className="rounded bg-black/40 px-1.5 py-0.5 text-white">59</span>
+                            <span className="text-[7px] text-[#9095A2] mt-0.5">MIN</span>
+                          </div>
+                          <span className="text-white/60 mb-2">:</span>
+                          <div className="flex flex-col items-center">
+                            <span className="rounded bg-black/40 px-1.5 py-0.5 text-white">52</span>
+                            <span className="text-[7px] text-[#9095A2] mt-0.5">SEC</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 🌟 Featured Artist Peek Banner */}
+                      <div
+                        className="relative overflow-hidden rounded-xl p-3 shadow-md"
+                        style={{
+                          background: `linear-gradient(135deg, ${branding.secondaryColor}40 0%, ${branding.surfaceColor} 100%)`,
+                          borderRadius: `${branding.borderRadius}px`,
+                        }}
+                      >
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-black"
+                          style={{ backgroundColor: branding.primaryColor }}
+                        >
+                          FEATURED ARTIST
+                        </span>
+                        <h4 className="mt-1.5 text-xs font-bold text-white">AESPA • World Tour Merch</h4>
+                      </div>
                     </div>
+
+                    {/* 🧭 Floating Bottom Navigation Bar */}
+                    <div className="absolute bottom-2 left-3 right-3 z-30 flex items-center justify-around rounded-full border border-white/10 bg-[#0E0E11]/90 py-2 shadow-2xl backdrop-blur-md">
+                      {/* Home (Active with indicator dot) */}
+                      <div className="flex flex-col items-center cursor-pointer">
+                        <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        <span className="mt-0.5 h-1 w-1 rounded-full" style={{ backgroundColor: branding.primaryColor }}></span>
+                      </div>
+
+                      {/* Search */}
+                      <div className="flex flex-col items-center cursor-pointer opacity-60 hover:opacity-100">
+                        <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+
+                      {/* Shop */}
+                      <div className="flex flex-col items-center cursor-pointer opacity-60 hover:opacity-100">
+                        <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                      </div>
+
+                      {/* Bag */}
+                      <div className="flex flex-col items-center cursor-pointer opacity-60 hover:opacity-100">
+                        <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                      </div>
+
+                      {/* Profile */}
+                      <div className="flex flex-col items-center cursor-pointer opacity-60 hover:opacity-100">
+                        <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    </div>
+
                   </div>
                 )}
 
                 {/* ── SCREEN 2: PDP (PRODUCT DETAIL) PREVIEW ── */}
                 {previewScreen === "pdp" && (
-                  <div className="space-y-3 pt-2">
+                  <div className="space-y-3 p-4 pt-3 pb-16">
                     <div className="relative h-44 w-full overflow-hidden rounded-xl bg-black/50 shadow-md">
                       <img src={SAMPLE_PRODUCTS[0].image} alt="PDP" className="h-full w-full object-cover" />
                       <span
@@ -1096,7 +1192,7 @@ export default function AdminDashboard() {
                       <div className="flex gap-2 text-[10px]">
                         <span
                           className="rounded px-2.5 py-1 font-semibold"
-                          style={{ backgroundColor: branding.primaryColor, color: "#000" }}
+                          style={{ backgroundColor: branding.primaryColor, color: "#41117C" }}
                         >
                           Deluxe Box
                         </span>
@@ -1111,9 +1207,10 @@ export default function AdminDashboard() {
 
                     {/* Primary CTA Button */}
                     <button
-                      className="mt-2 w-full py-2.5 text-center text-xs font-bold uppercase tracking-wider text-black shadow-md transition active:scale-95"
+                      className="mt-2 w-full py-2.5 text-center text-xs font-bold uppercase tracking-wider shadow-md transition active:scale-95"
                       style={{
                         backgroundColor: branding.primaryColor,
+                        color: "#41117C",
                         borderRadius: `${branding.borderRadius}px`,
                       }}
                     >
@@ -1124,7 +1221,7 @@ export default function AdminDashboard() {
 
                 {/* ── SCREEN 3: CART / CHECKOUT PREVIEW ── */}
                 {previewScreen === "cart" && (
-                  <div className="space-y-3 pt-2">
+                  <div className="space-y-3 p-4 pt-3 pb-16">
                     <div className="flex items-center justify-between border-b border-white/5 pb-2">
                       <span className="text-xs font-bold uppercase tracking-wider">Your Fan Bag (1)</span>
                       <span className="text-[10px] opacity-70">Express Checkout</span>
@@ -1165,9 +1262,10 @@ export default function AdminDashboard() {
 
                     {/* Native Shopify Checkout Sheet Bridge Button */}
                     <button
-                      className="w-full py-2.5 text-center text-xs font-bold uppercase tracking-wider text-black shadow-md transition active:scale-95"
+                      className="w-full py-2.5 text-center text-xs font-bold uppercase tracking-wider shadow-md transition active:scale-95"
                       style={{
                         backgroundColor: branding.primaryColor,
+                        color: "#41117C",
                         borderRadius: `${branding.borderRadius}px`,
                       }}
                     >
