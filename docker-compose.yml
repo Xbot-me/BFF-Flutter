@@ -8,6 +8,8 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    networks:
+      - proxy
     ports:
       - "3000:3000"
     volumes:
@@ -33,3 +35,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+networks:
+  proxy:
+    external: true
