@@ -1,11 +1,12 @@
+import { getRedisClient } from "./redis.client";
+
 /**
  * Multi-Layer High-Performance Cache Service with Stale-While-Revalidate (SWR)
  * 
- * Features:
- * - Ultra-fast <1ms in-memory cache
- * - Stale-While-Revalidate: Serves stale data immediately, refreshes in the background
- * - Namespaced key generation per tenant
- * - Safe error handling with background task resilience
+ * Hierarchy:
+ * - L1: In-Memory Map (<1ms instant access)
+ * - L2: Redis Persistence (Shared across container replicas / survives reboots)
+ * - SWR: Stale-While-Revalidate pattern for zero client waiting
  */
 
 interface CacheEntry<T> {
@@ -43,9 +44,7 @@ export class CacheService {
 
   /**
    * Executes fetcher with Stale-While-Revalidate (SWR) semantics.
-   * If fresh: returns cached data.
-   * If stale: returns stale data immediately and revalidates in the background.
-   * If missing: awaits fetcher, populates cache, and returns fresh data.
+   * Checks L1 (Memory) -> L2 (Redis) -> Origin (Fetcher).
    */
   static async swr<T>(
     key: string,
@@ -56,17 +55,26 @@ export class CacheService {
     const staleTtlMs = options.stale ?? CacheService.TTL.PRODUCTS_LIST.stale;
     const now = Date.now();
 
-    const entry = this.store.get(key) as CacheEntry<T> | undefined;
+    // 1. Check L1 Memory Cache (<1ms)
+    let entry = this.store.get(key) as CacheEntry<T> | undefined;
+
+    // 2. Check L2 Redis Cache if missing in L1
+    if (!entry) {
+      entry = await this.getFromRedis<T>(key);
+      if (entry) {
+        this.store.set(key, entry); // Hydrate L1
+      }
+    }
 
     if (entry) {
       const age = now - entry.cachedAt;
 
-      // 1. Fresh Hit (< TTL) -> Return immediately
+      // Fresh Hit (< TTL) -> Return immediately
       if (age < entry.ttlMs) {
         return entry.data;
       }
 
-      // 2. Stale Hit (< Stale TTL) -> Return stale data instantly & trigger background revalidation
+      // Stale Hit (< Stale TTL) -> Return stale data instantly & trigger background revalidation
       if (age < entry.staleTtlMs) {
         this.triggerBackgroundRevalidate(key, fetcher, ttlMs, staleTtlMs);
         return entry.data;
@@ -75,35 +83,79 @@ export class CacheService {
 
     // 3. Cache Miss or Expired beyond Stale TTL -> Synchronous fetch
     const freshData = await fetcher();
-    this.set(key, freshData, ttlMs, staleTtlMs);
+    await this.set(key, freshData, ttlMs, staleTtlMs);
     return freshData;
   }
 
   /**
-   * Manually sets an item in the cache
+   * Sets item in both L1 (Memory) and L2 (Redis)
    */
-  static set<T>(key: string, data: T, ttlMs: number, staleTtlMs: number): void {
-    if (this.store.size >= this.MAX_ENTRIES) {
-      // LRU Eviction: Remove oldest inserted key
-      const firstKey = this.store.keys().next().value;
-      if (firstKey) this.store.delete(firstKey);
-    }
-
-    this.store.set(key, {
+  static async set<T>(key: string, data: T, ttlMs: number, staleTtlMs: number): Promise<void> {
+    const entry: CacheEntry<T> = {
       data,
       cachedAt: Date.now(),
       ttlMs,
       staleTtlMs,
-    });
+    };
+
+    // Set L1
+    if (this.store.size >= this.MAX_ENTRIES) {
+      const firstKey = this.store.keys().next().value;
+      if (firstKey) this.store.delete(firstKey);
+    }
+    this.store.set(key, entry);
+
+    // Set L2 Redis asynchronously
+    const redis = getRedisClient();
+    if (redis) {
+      try {
+        const expireSeconds = Math.ceil(staleTtlMs / 1000);
+        await redis.set(key, JSON.stringify(entry), "EX", expireSeconds);
+      } catch (err) {
+        console.warn("[CacheService] Redis set error:", err);
+      }
+    }
   }
 
   /**
-   * Invalidate specific keys or keys matching a prefix
+   * Get entry from Redis
    */
-  static invalidate(pattern: string): void {
+  private static async getFromRedis<T>(key: string): Promise<CacheEntry<T> | undefined> {
+    const redis = getRedisClient();
+    if (!redis) return undefined;
+
+    try {
+      const raw = await redis.get(key);
+      if (raw) {
+        return JSON.parse(raw) as CacheEntry<T>;
+      }
+    } catch (err) {
+      console.warn("[CacheService] Redis get error:", err);
+    }
+    return undefined;
+  }
+
+  /**
+   * Invalidate specific keys or keys matching a pattern in L1 and L2
+   */
+  static async invalidate(pattern: string): Promise<void> {
+    // Clear L1
     for (const k of this.store.keys()) {
       if (k.includes(pattern)) {
         this.store.delete(k);
+      }
+    }
+
+    // Clear L2 Redis
+    const redis = getRedisClient();
+    if (redis) {
+      try {
+        const keys = await redis.keys(`*${pattern}*`);
+        if (keys.length > 0) {
+          await redis.del(...keys);
+        }
+      } catch (err) {
+        console.warn("[CacheService] Redis invalidate error:", err);
       }
     }
   }
@@ -121,11 +173,10 @@ export class CacheService {
 
     this.revalidatingKeys.add(key);
 
-    // Run detached background promise
     Promise.resolve().then(async () => {
       try {
         const fresh = await fetcher();
-        this.set(key, fresh, ttlMs, staleTtlMs);
+        await this.set(key, fresh, ttlMs, staleTtlMs);
       } catch (err) {
         console.warn(`[CacheService] Background revalidation failed for ${key}:`, err);
       } finally {

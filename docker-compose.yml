@@ -17,6 +17,9 @@ services:
     environment:
       - NODE_ENV=production
       - API_SOURCE=MOCK # Change to SHOPIFY in production
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
     deploy:
       resources:
         limits:
@@ -35,6 +38,29 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: kpop-bff-redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning --maxmemory 128mb --maxmemory-policy allkeys-lru
+    networks:
+      - proxy
+    volumes:
+      - redis-data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.5'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+volumes:
+  redis-data:
 
 networks:
   proxy:
