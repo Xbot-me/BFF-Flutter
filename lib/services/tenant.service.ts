@@ -190,6 +190,11 @@ export class TenantService {
 
     this.cache.set(updated.id, updated);
     this.save();
+    try {
+      // Invalidate all cached data for this tenant
+      const { CacheService } = require("./cache.service");
+      CacheService.invalidate(updated.id);
+    } catch (_) {}
     return updated;
   }
 
@@ -197,7 +202,13 @@ export class TenantService {
     this.load();
     if (id === "k-luxe") return false; // Prevent deleting default primary tenant
     const deleted = this.cache.delete(id);
-    if (deleted) this.save();
+    if (deleted) {
+      this.save();
+      try {
+        const { CacheService } = require("./cache.service");
+        CacheService.invalidate(id);
+      } catch (_) {}
+    }
     return deleted;
   }
 }

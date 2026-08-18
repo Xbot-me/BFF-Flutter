@@ -47,6 +47,7 @@ export class ShopifyClient {
       headers: {
         "Content-Type": "application/json",
         "X-Shopify-Storefront-Access-Token": this.token,
+        "Connection": "keep-alive",
       },
       body: JSON.stringify({ query, variables }),
       // Cart and checkout mutations must never be served from cache. Product
